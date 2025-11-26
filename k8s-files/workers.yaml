@@ -1,0 +1,183 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: preprocess
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: preprocess
+  template:
+    metadata:
+      labels:
+        app: preprocess
+    spec:
+      containers:
+        - name: preprocess
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/preprocess:v1
+          envFrom:
+            - secretRef:
+                name: rabbitmq-env
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/backend/data
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: nfs-data-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: format
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: format
+  template:
+    metadata:
+      labels:
+        app: format
+    spec:
+      containers:
+        - name: format
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/format:v1
+          envFrom:
+            - secretRef:
+                name: format-env
+            - secretRef:
+                name: rabbitmq-env
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/backend/data
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: nfs-data-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prompt
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prompt
+  template:
+    metadata:
+      labels:
+        app: prompt
+    spec:
+      containers:
+        - name: prompt
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/prompt:v1
+          envFrom:
+            - secretRef:
+                name: prompt-env
+            - secretRef:
+                name: rabbitmq-env
+          volumeMounts:
+            - name: prompts-volume
+              mountPath: /app/backend/prompts
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+      volumes:
+        - name: prompts-volume
+          persistentVolumeClaim:
+            claimName: nfs-prompts-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vectorize
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vectorize
+  template:
+    metadata:
+      labels:
+        app: vectorize
+    spec:
+      containers:
+        - name: vectorize
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/vectorize:v1
+          envFrom:
+            - secretRef:
+                name: vectorize-env
+            - secretRef:
+                name: rabbitmq-env
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/backend/data
+            - name: databases-volume
+              mountPath: /app/databases
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: nfs-data-pvc
+        - name: databases-volume
+          persistentVolumeClaim:
+            claimName: nfs-databases-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: barriers
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: barriers
+  template:
+    metadata:
+      labels:
+        app: barriers
+    spec:
+      containers:
+        - name: barriers
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/barrier:v1
+          envFrom:
+            - secretRef:
+                name: rabbitmq-env
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
