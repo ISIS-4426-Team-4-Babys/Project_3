@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/backend:v1
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: backend-secrets
+            - secretRef:
+                name: rabbitmq-env
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/backend/data
+            - name: prompts-volume
+              mountPath: /app/backend/prompts
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: nfs-data-pvc
+        - name: prompts-volume
+          persistentVolumeClaim:
+            claimName: nfs-prompts-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: platform
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
