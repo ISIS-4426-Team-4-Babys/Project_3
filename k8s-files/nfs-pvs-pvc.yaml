@@ -1,0 +1,86 @@
+# PVs para el servidor NFS
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-data-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-sc
+  nfs:
+    server: 10.142.0.26
+    path: /nfs/data
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-prompts-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-sc
+  nfs:
+    server: 10.142.0.26
+    path: /nfs/prompts
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-databases-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-sc
+  nfs:
+    server: 10.142.0.26
+    path: /nfs/databases
+
+# PVCs en el namespace platform
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-data-pvc
+  namespace: platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-sc
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-prompts-pvc
+  namespace: platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-sc
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-databases-pvc
+  namespace: platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-sc
+  resources:
+    requests:
+      storage: 20Gi
