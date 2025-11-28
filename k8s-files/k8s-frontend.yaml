@@ -25,6 +25,13 @@ spec:
               value: "http://backend:8000"
             - name: AGENTS_PROXY
               value: "http://agents-proxy.agents.svc.cluster.local:80"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
