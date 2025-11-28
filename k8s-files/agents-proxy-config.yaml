@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agents-proxy-nginx
+  namespace: agents
+data:
+  nginx.conf: |-
+    worker_processes  1;
+
+    events {
+      worker_connections  1024;
+    }
+
+    http {
+      resolver kube-dns.kube-system.svc.cluster.local valid=10s ipv6=off;
+
+      access_log /var/log/nginx/access.log;
+      error_log  /var/log/nginx/error.log warn;
+
+      server {
+        listen 80;
+
+        # Healthcheck sencillo
+        location = /healthz {
+          return 200 'ok';
+          add_header Content-Type text/plain;
+        }
+
+        # Ruta principal para agentes:
+        # /agents/<agent_id>/<resto-del-path>
+        location ~ ^/agents/(?<id>[^/]+)(?<rest>/.*)?$ {
+          # Construimos el upstream dinámico: agent-<id>.agents.svc.cluster.local:8000
+          set $upstream "http://agent-${id}.agents.svc.cluster.local:8000";
+
+          # Timeouts (tu timeout.conf)
+          proxy_connect_timeout 75s;
+          proxy_send_timeout    600s;
+          proxy_read_timeout    600s;
+          send_timeout          600s;
+
+          # Cabeceras típicas
+          proxy_set_header Host              $host;
+          proxy_set_header X-Real-IP         $remote_addr;
+          proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+
+          # Por si quieres evitar buffering para respuestas largas/streaming:
+          # proxy_buffering off;
+
+          # Pasamos la petición al servicio del agente
+          proxy_pass $upstream$rest;
+        }
+
+        # Opcional: fallback
+        location / {
+          return 404 "Unknown path\n";
+        }
+      }
+    }

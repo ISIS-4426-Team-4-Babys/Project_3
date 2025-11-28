@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: agents
+  namespace: platform
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: us-east1-docker.pkg.dev/deplo-478916/deplo/frontend:v1
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/frontend:v2
           ports:
             - containerPort: 3000
           env:
@@ -24,7 +24,7 @@ spec:
             - name: BACKEND_HOST
               value: "http://backend:8000"
             - name: AGENTS_PROXY
-              value: "http://agents-proxy:80"
+              value: "http://agents-proxy.agents.svc.cluster.local:80"
 ---
 apiVersion: v1
 kind: Service

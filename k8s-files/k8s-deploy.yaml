@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deploy
+  template:
+    metadata:
+      labels:
+        app: deploy
+    spec:
+      serviceAccountName: deploy-worker
+      containers:
+        - name: deploy
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/deploy:v1
+          envFrom:
+            - secretRef:
+                name: rabbitmq-env
+            - secretRef:
+                name: vectorize-env
+            - secretRef:
+                name: deploy-env
+          volumeMounts:
+            - name: databases-volume
+              mountPath: /app/databases
+            - name: prompts-volume
+              mountPath: /app/prompts
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+      volumes:
+        - name: databases-volume
+          persistentVolumeClaim:
+            claimName: nfs-databases-pvc
+        - name: prompts-volume
+          persistentVolumeClaim:
+            claimName: nfs-prompts-pvc
