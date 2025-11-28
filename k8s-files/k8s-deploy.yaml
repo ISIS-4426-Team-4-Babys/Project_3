@@ -16,7 +16,7 @@ spec:
       serviceAccountName: deploy-worker
       containers:
         - name: deploy
-          image: us-east1-docker.pkg.dev/deplo-478916/deplo/deploy:v1
+          image: us-east1-docker.pkg.dev/deplo-478916/deplo/deploy:v2
           envFrom:
             - secretRef:
                 name: rabbitmq-env
